@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            "ppath = planned_path.ppath_control:main" 
         ],
     },
 )
