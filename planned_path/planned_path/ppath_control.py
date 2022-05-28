@@ -15,9 +15,9 @@ class PlannedPath(Node):
         self._publisher = self.create_publisher(AckermannDriveStamped, "drive", 1)
         
         self.start_time = self.get_clock().now()
-        self.seg_1 = Duration(6)
-        self.seg_2 = Duration(8) 
-        self.seg_3 = Duration(10) 
+        self.seg_1 = Duration(seconds=6)
+        self.seg_2 = Duration(seconds=7,nanoseconds=4*10**8) 
+        self.seg_3 = Duration(seconds=8) 
 
         self.ctl_loop = self.create_timer(0.2,self.main_control)
         
