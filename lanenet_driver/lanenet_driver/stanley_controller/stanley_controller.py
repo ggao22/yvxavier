@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 
-import cubic_spline_planner
+from . import cubic_spline_planner
 
 
 k = 1.8  # control gain

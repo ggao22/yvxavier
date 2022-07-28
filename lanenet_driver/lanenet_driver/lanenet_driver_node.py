@@ -19,13 +19,16 @@ class LanenetDriver(Node):
         self.get_logger().info("Started lanenet driver...")
 
         self.subscriber_ = self.create_subscription(PointsVector, '/lanenet_path', self.driver_callback, 1)
-        self.publisher_ = self.createpublisher_(AckermannDriveStamped, "drive", 1)
+        self.publisher_ = self.create_publisher(AckermannDriveStamped, "drive", 1)
 
-        self.new_data = True
+        self.drive_exists = False
 
         self.ctl_loop = self.create_timer(0.05,self.main_control)
         
     def driver_callback(self, data):
+        self.drive_exists = True
+        self.get_logger().info("New data received...")
+
         vector = data.points
         x_coeff = data.x_coeff
         self.ax = []
@@ -47,7 +50,9 @@ class LanenetDriver(Node):
         self.target_idx, _ = calc_target_index(self.state, self.cx, self.cy)
 
     def main_control(self):
-        if self.last_idx > self.target_idx:
+        #if self.drive_exists and self.last_idx > self.target_idx:
+        if self.drive_exists:
+            self.get_logger().info("Stanley controlling...")
             self.ai = pid_control(self.target_speed, self.state.v)
             self.di, self.target_idx = stanley_control(self.state, self.cx, self.cy, self.cyaw, self.target_idx)
             delta, v = self.state.update(self.ai, self.di)
@@ -65,6 +70,7 @@ class LanenetDriver(Node):
         msg.drive.acceleration = 0.0
         msg.drive.jerk = 0.0
 
+        self.get_logger().info("Publishing on drive...")
         self.publisher_.publish(msg)
         
 
