@@ -38,20 +38,22 @@ class LanenetDriver(Node):
             self.ax.append(pt.x)
             self.ay.append(pt.y)
         
+        self.ax.reverse()
+        self.ay.reverse()
+        
         self.cx, self.cy, self.cyaw, ck, s = cubic_spline_planner.calc_spline_course(
-            self.ax, self.ay, ds=0.1)
+            self.ax, self.ay, ds=0.001)
 
-        self.target_speed = 1.0 / 3.6  # [m/s]
+        self.target_speed = 0.8 / 3.6  # [m/s]
 
         # Initial state
-        self.state = State(x=640*x_coeff, y=0, yaw=np.radians(90.0), v=1.0)
+        self.state = State(x=640*x_coeff, y=0, yaw=np.radians(90.0), v=0.8)
 
         self.last_idx = len(self.cx) - 1
         self.target_idx, _ = calc_target_index(self.state, self.cx, self.cy)
 
     def main_control(self):
-        #if self.drive_exists and self.last_idx > self.target_idx:
-        if self.drive_exists:
+        if self.drive_exists and self.last_idx > self.target_idx:
             self.get_logger().info("Stanley controlling...")
             self.ai = pid_control(self.target_speed, self.state.v)
             self.di, self.target_idx = stanley_control(self.state, self.cx, self.cy, self.cyaw, self.target_idx)
