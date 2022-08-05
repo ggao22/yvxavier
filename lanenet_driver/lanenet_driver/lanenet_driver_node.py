@@ -21,12 +21,11 @@ class LanenetDriver(Node):
         self.subscriber_ = self.create_subscription(PointsVector, '/lanenet_path', self.driver_callback, 1)
         self.publisher_ = self.create_publisher(AckermannDriveStamped, "drive", 1)
 
-        self.drive_exists = False
+        self.delta = 0
 
         self.ctl_loop = self.create_timer(0.05,self.main_control)
         
     def driver_callback(self, data):
-        self.drive_exists = True
         self.get_logger().info("New data received...")
 
         vector = data.points
@@ -38,16 +37,13 @@ class LanenetDriver(Node):
             self.ax.append(pt.x)
             self.ay.append(pt.y)
         
-        self.ax.reverse()
-        self.ay.reverse()
-        
         self.cx, self.cy, self.cyaw, ck, s = cubic_spline_planner.calc_spline_course(
             self.ax, self.ay, ds=0.001)
 
-        self.target_speed = 0.8 / 3.6  # [m/s]
+        self.target_speed = 2 / 3.6  # [m/s]
 
         # Initial state
-        self.state = State(x=640*x_coeff, y=0, yaw=np.radians(90.0), v=0.8)
+        self.state = State(x=640*x_coeff, y=0.5, yaw=np.radians(90.0), v=2.0)
 
         self.last_idx = len(self.cx) - 1
         self.target_idx, _ = calc_target_index(self.state, self.cx, self.cy)
@@ -58,7 +54,8 @@ class LanenetDriver(Node):
         self.delta, v = self.state.update(self.ai, self.di)
         
     def main_control(self):
-        self.drive_with_steer(self.delta, 0.1, 0.4)
+        if self.delta:
+            self.drive_with_steer(self.delta, 0.05, 0.2)
 
     def drive_with_steer(self, steering_angle, steering_velocity, speed):
         msg = AckermannDriveStamped()
