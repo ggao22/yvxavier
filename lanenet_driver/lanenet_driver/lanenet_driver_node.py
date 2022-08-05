@@ -52,23 +52,23 @@ class LanenetDriver(Node):
         self.last_idx = len(self.cx) - 1
         self.target_idx, _ = calc_target_index(self.state, self.cx, self.cy)
 
+        self.get_logger().info("Stanley controlling...")
+        self.ai = pid_control(self.target_speed, self.state.v)
+        self.di, self.target_idx = stanley_control(self.state, self.cx, self.cy, self.cyaw, self.target_idx)
+        self.delta, v = self.state.update(self.ai, self.di)
+        
     def main_control(self):
-        if self.drive_exists and self.last_idx > self.target_idx:
-            self.get_logger().info("Stanley controlling...")
-            self.ai = pid_control(self.target_speed, self.state.v)
-            self.di, self.target_idx = stanley_control(self.state, self.cx, self.cy, self.cyaw, self.target_idx)
-            delta, v = self.state.update(self.ai, self.di)
-            self.drive_with_steer(delta, v)
+        self.drive_with_steer(self.delta, 0.1, 0.4)
 
-    def drive_with_steer(self, steering_angle, velocity):
+    def drive_with_steer(self, steering_angle, steering_velocity, speed):
         msg = AckermannDriveStamped()
 
         msg.header.stamp.sec = 0
         msg.header.stamp.nanosec = 0
         msg.header.frame_id = "lanenet_drive"
         msg.drive.steering_angle = steering_angle
-        msg.drive.steering_angle_velocity = 0.0
-        msg.drive.speed = velocity
+        msg.drive.steering_angle_velocity = steering_velocity
+        msg.drive.speed = speed
         msg.drive.acceleration = 0.0
         msg.drive.jerk = 0.0
 
