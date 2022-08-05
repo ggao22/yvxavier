@@ -21,11 +21,12 @@ class LanenetDriver(Node):
         self.subscriber_ = self.create_subscription(PointsVector, '/lanenet_path', self.driver_callback, 1)
         self.publisher_ = self.create_publisher(AckermannDriveStamped, "drive", 1)
 
-        self.delta = 0
+        self.drive_exists = False
 
         self.ctl_loop = self.create_timer(0.05,self.main_control)
         
     def driver_callback(self, data):
+        self.drive_exists = True
         self.get_logger().info("New data received...")
 
         vector = data.points
@@ -40,22 +41,23 @@ class LanenetDriver(Node):
         self.cx, self.cy, self.cyaw, ck, s = cubic_spline_planner.calc_spline_course(
             self.ax, self.ay, ds=0.001)
 
-        self.target_speed = 2 / 3.6  # [m/s]
+        self.target_speed = 0.5 / 3.6  # [m/s]
 
         # Initial state
-        self.state = State(x=640*x_coeff, y=0.5, yaw=np.radians(90.0), v=2.0)
+        self.state = State(x=640*x_coeff, y=0.8, yaw=np.radians(90.0), v=0.5)
 
         self.last_idx = len(self.cx) - 1
         self.target_idx, _ = calc_target_index(self.state, self.cx, self.cy)
 
-        self.get_logger().info("Stanley controlling...")
-        self.ai = pid_control(self.target_speed, self.state.v)
-        self.di, self.target_idx = stanley_control(self.state, self.cx, self.cy, self.cyaw, self.target_idx)
-        self.delta, v = self.state.update(self.ai, self.di)
         
     def main_control(self):
-        if self.delta:
-            self.drive_with_steer(self.delta, 0.05, 0.2)
+        if self.drive_exists and self.last_idx > self.target_idx:
+            self.get_logger().info("Stanley controlling...")
+            self.ai = pid_control(self.target_speed, self.state.v)
+            self.di, self.target_idx = stanley_control(self.state, self.cx, self.cy, self.cyaw, self.target_idx)
+            self.delta, self.v = self.state.update(self.ai, self.di)
+            self.drive_with_steer(self.delta, 0.05, self.v)
+
 
     def drive_with_steer(self, steering_angle, steering_velocity, speed):
         msg = AckermannDriveStamped()
