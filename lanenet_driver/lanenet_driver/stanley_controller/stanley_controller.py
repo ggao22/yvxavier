@@ -17,7 +17,11 @@ import os
 from . import cubic_spline_planner
 
 
+<<<<<<< HEAD
 k = 1.5  # control gain
+=======
+k = 0.3  # control gain
+>>>>>>> refs/remotes/origin/main
 Kp = 1.0  # speed proportional gain
 dt = 0.05  # [s] time difference
 L = 0.36/2  # [m] Wheel base of vehicle
