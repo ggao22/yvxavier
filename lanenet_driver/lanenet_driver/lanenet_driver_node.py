@@ -44,14 +44,14 @@ class LanenetDriver(Node):
         self.target_speed = 0.5 / 3.6  # [m/s]
 
         # Initial state
-        self.state = State(x=640*x_coeff, y=0.8, yaw=np.radians(90.0), v=0.5)
+        self.state = State(x=640*x_coeff, y=0.4, yaw=np.radians(90.0), v=0.5)
 
         self.last_idx = len(self.cx) - 1
         self.target_idx, _ = calc_target_index(self.state, self.cx, self.cy)
 
         
     def main_control(self):
-        if self.drive_exists and self.last_idx > self.target_idx:
+        if self.drive_exists:
             self.get_logger().info("Stanley controlling...")
             self.ai = pid_control(self.target_speed, self.state.v)
             self.di, self.target_idx = stanley_control(self.state, self.cx, self.cy, self.cyaw, self.target_idx)
