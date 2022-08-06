@@ -17,10 +17,10 @@ import os
 from . import cubic_spline_planner
 
 
-k = 5.0  # control gain
+k = 1.5  # control gain
 Kp = 1.0  # speed proportional gain
-dt = 0.01  # [s] time difference
-L = 0.33  # [m] Wheel base of vehicle
+dt = 0.05  # [s] time difference
+L = 0.36/2  # [m] Wheel base of vehicle
 max_steer = 0.33  # [rad] max steering angle
 
 show_animation = True
