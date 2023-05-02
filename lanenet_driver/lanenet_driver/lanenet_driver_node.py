@@ -6,7 +6,6 @@ from rclpy.node import Node
 from rclpy.duration import Duration
 
 from points_vector.msg import PointsVector
-from points_vector.msg import OrderedPointsVector
 from ackermann_msgs.msg import AckermannDriveStamped
 
 from .stanley_controller import cubic_spline_planner
@@ -20,15 +19,12 @@ class LanenetDriver(Node):
         self.get_logger().info("Started lanenet driver...")
 
         self.subscriber_ = self.create_subscription(PointsVector, '/lanenet_path', self.driver_callback, 1)
-        self.subscriber_ = self.create_subscription(OrderedPointsVector, '/lanenet_parall_path', self.driver_parall_callback, 1)
         self.publisher_ = self.create_publisher(AckermannDriveStamped, "drive", 1)
 
         self.drive_exists = False
-        self.current_index = 0
 
         self.ctl_loop = self.create_timer(0.05,self.main_control)
         
-
     def driver_callback(self, data):
         self.drive_exists = True
         self.get_logger().info("New data received...")
@@ -53,12 +49,6 @@ class LanenetDriver(Node):
         self.last_idx = len(self.cx) - 1
         self.target_idx, _ = calc_target_index(self.state, self.cx, self.cy)
 
-
-    def driver_parall_callback(self, data):
-        if data.order > self.current_index:
-            self.current_index = data.order
-            self.driver_callback(data)
-
         
     def main_control(self):
         if self.drive_exists:
@@ -67,7 +57,7 @@ class LanenetDriver(Node):
             self.di, self.target_idx = stanley_control(self.state, self.cx, self.cy, self.cyaw, self.target_idx)
             self.delta, self.v = self.state.update(self.ai, self.di)
             self.drive_with_steer(self.delta, 0.05, self.v)
-        
+
 
     def drive_with_steer(self, steering_angle, steering_velocity, speed):
         msg = AckermannDriveStamped()
